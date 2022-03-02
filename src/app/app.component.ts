@@ -1,5 +1,8 @@
 import { Component } from '@angular/core';
 
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+
+
 
   import {
     ViewerOptions,
@@ -10,10 +13,10 @@ import { Component } from '@angular/core';
     Extension,
  } from 'ng2-adsk-forge-viewer';  
 
-import { TestExtension } from './test-extension';
+//import { MyExtension } from './my-extension';
 
-export const ACCESS_TOKEN = "TOKEN_HERE";
-export const DOCUMENT_URN = "URN_HERE"; 
+//export const ACCESS_TOKEN = "eyJhbGciOiJSUzI1NiIsImtpZCI6IlU3c0dGRldUTzlBekNhSzBqZURRM2dQZXBURVdWN2VhIn0.eyJzY29wZSI6WyJ2aWV3YWJsZXM6cmVhZCJdLCJjbGllbnRfaWQiOiIyREp3NEo2THNSbjBCZWk4U3psMUJrYWw0M1F4TE1ZTyIsImF1ZCI6Imh0dHBzOi8vYXV0b2Rlc2suY29tL2F1ZC9hand0ZXhwNjAiLCJqdGkiOiJtbXJlOEE3QW1OWWt1WGxzVFZ5TVlVNWdEaUxJTkJLRFVoMHRaQWMzdDlSbTRlemJrTDZxZGc3cUJtUEZIMENJIiwiZXhwIjoxNjQ2MDkzNzcxfQ.VRnl0JmNMEQIP0puKGV9Nle9SKkC_-3jHYgUuo0pU5MKBuGtdqhlNiCWwaLP1DB_aGlF8sSUOt8X9kqo9tBRzYdVzscD9gYLU0gxm6OjH15Yh966YMMomXsTsBu2OO28yypnj2isdjAnsHL4lS9fdXxenF5YNdGWksZRaz9R8LCWD_atCuJ0khLhDJY_QayUBx-MXMOvGs_aJSzbXtm_UUV_Ybxw8XByiwgKXD0jwE69EHGJ5WzzI2uIKNg1sJfgfM549x10L4XkgjUt42b8RYvNyt1DPXpoW1lvuuLKXVeCqG83HBjJwAld2XGMiTPBicWlD-HVezYvUZaq62hT2w";
+export const DOCUMENT_URN = "dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6Y2FyZG9uaXYvMjEtMDktMTQtODUzNGh1YjIubndk"; 
 
 
 @Component({
@@ -22,7 +25,7 @@ export const DOCUMENT_URN = "URN_HERE";
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  title = 'appviewer';
+  title = 'app viewer';
 
 
   public viewerOptions3d: ViewerOptions;
@@ -31,64 +34,60 @@ export class AppComponent {
   public documentId: string;
   public view: number = 1;
   public viewer:any;
+  public autorizacion:any;
+  //public ACCESS_TOKEN: string;
+
+
+  constructor(private http : HttpClient) { }
 
   async ngOnInit() {
 
-    
-    
-         this.thumbnailOptions = {
-           getAccessToken: (onGetAccessToken: (token: string, expire: number) => void) => {
-           const expireTimeSeconds = 60 * 30;
-            onGetAccessToken(ACCESS_TOKEN, expireTimeSeconds);
-      },
-         documentId: DOCUMENT_URN,
-         width: 400,
-         height: 400,
-      // defaultImageSrc: '',
-    };
+    const ACCESS_TOKEN = this.getToken();
 
+
+    console.log(ACCESS_TOKEN);
+
+    
+    
     this.viewerOptions3d = {
-       initializerOptions: {
-       env: 'AutodeskProduction',
-        getAccessToken: (onGetAccessToken: (token: string, expire: number) => void) => {
-           const expireTimeSeconds = 60 * 30;
-           onGetAccessToken(ACCESS_TOKEN, expireTimeSeconds);
-         },
-         api: 'derivativeV2',
+      initializerOptions: {
+        env: "AutodeskProduction",
+        getAccessToken: (
+          onGetAccessToken: (token: string, expire: number) => void
+        ) => {
+          const expireTimeSeconds = 60 * 30;
+          onGetAccessToken(ACCESS_TOKEN, expireTimeSeconds);
+        },
+        api: "derivativeV2",
+        enableMemoryManagement: true
       },
-          viewerConfig: {
-          extensions: [TestExtension.extensionName],
-          theme: 'bim-theme',
-       },
-       onViewerScriptsLoaded: this.scriptsLoaded,
-       onViewerInitialized: this.loadDocument,
-       showFirstViewable: false,
-       headlessViewer: true,
-     };
-
-     this.viewerOptions2d = Object.assign({}, this.viewerOptions3d, { showFirstViewable: false });
-
-
-     function onDocumentLoadFailure() {
-      console.error('Failed fetching Forge manifest');
-    }
-
-    /* function onDocumentLoadSuccess(viewerDocument) {
-      var defaultModel = viewerDocument.getRoot().getDefaultGeometry();
-      viewer.loadDocumentNode(viewerDocument, defaultModel);
-    } */
-   
+      viewerConfig: {
+        //extensions: ["Autodesk.DocumentBrowser", MyExtension.extensionName],
+        theme: "bim-theme"
+      },
+      onViewerScriptsLoaded: () => {
+        // Register a custom extension
+        // Extension.registerExtension(MyExtension.extensionName, MyExtension);
+      },
+      onViewerInitialized: (args: ViewerInitializedEvent) => {
+        args.viewerComponent.DocumentId = DOCUMENT_URN;
+      },
+      // showFirstViewable: false,
+      // headlessViewer: true,
+      // Set specific version number
+      //version: "7.41"
+    };
 
   
 }
 
-    public scriptsLoaded() {
-      Extension.registerExtension(TestExtension.extensionName, TestExtension);
-    }
+    /* public scriptsLoaded() {
+      Extension.registerExtension(MyExtension.extensionName, MyExtension);
+    } */
   
-    public loadDocument(args: ViewerInitializedEvent) {
+   /*  public loadDocument(args: ViewerInitializedEvent) {
       args.viewerComponent.DocumentId = DOCUMENT_URN;
-    }
+    } */
 
     public documentChanged(event: DocumentChangedEvent) {
       const { document } = event;
@@ -105,6 +104,20 @@ export class AppComponent {
       console.log(event);
    } 
 
+  public getToken():any {
+
+    this.http.get("http://localhost:3000/api/forge/oauth/token").subscribe((data)=>{
+        this.autorizacion = data;
+
+       // console.log(this.autorizacion.access_token);
+
+        return this.autorizacion.access_token;
+
+        
+    });
+
+
+   }
 
 }
 
