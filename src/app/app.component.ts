@@ -13,10 +13,11 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
     Extension,
  } from 'ng2-adsk-forge-viewer';  
 
-//import { MyExtension } from './my-extension';
+//import { MyExtension } from './my_extension';
 
-//export const ACCESS_TOKEN = "eyJhbGciOiJSUzI1NiIsImtpZCI6IlU3c0dGRldUTzlBekNhSzBqZURRM2dQZXBURVdWN2VhIn0.eyJzY29wZSI6WyJ2aWV3YWJsZXM6cmVhZCJdLCJjbGllbnRfaWQiOiIyREp3NEo2THNSbjBCZWk4U3psMUJrYWw0M1F4TE1ZTyIsImF1ZCI6Imh0dHBzOi8vYXV0b2Rlc2suY29tL2F1ZC9hand0ZXhwNjAiLCJqdGkiOiJtbXJlOEE3QW1OWWt1WGxzVFZ5TVlVNWdEaUxJTkJLRFVoMHRaQWMzdDlSbTRlemJrTDZxZGc3cUJtUEZIMENJIiwiZXhwIjoxNjQ2MDkzNzcxfQ.VRnl0JmNMEQIP0puKGV9Nle9SKkC_-3jHYgUuo0pU5MKBuGtdqhlNiCWwaLP1DB_aGlF8sSUOt8X9kqo9tBRzYdVzscD9gYLU0gxm6OjH15Yh966YMMomXsTsBu2OO28yypnj2isdjAnsHL4lS9fdXxenF5YNdGWksZRaz9R8LCWD_atCuJ0khLhDJY_QayUBx-MXMOvGs_aJSzbXtm_UUV_Ybxw8XByiwgKXD0jwE69EHGJ5WzzI2uIKNg1sJfgfM549x10L4XkgjUt42b8RYvNyt1DPXpoW1lvuuLKXVeCqG83HBjJwAld2XGMiTPBicWlD-HVezYvUZaq62hT2w";
-export const DOCUMENT_URN = "dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6Y2FyZG9uaXYvMjEtMDktMTQtODUzNGh1YjIubndk"; 
+export const DOCUMENT_URN_3D = "dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6Y2FyZG9uaXYvMjEtMDktMTQtODUzNGh1YjIubndk"; 
+export const DOCUMENT_URN_2D = "dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6Y2FyZG9uaXYvSU5UMTQzLTEwLTIwMC1ERERELTIyLVI2LmR3Zw=="; 
+
 
 
 @Component({
@@ -35,29 +36,34 @@ export class AppComponent {
   public view: number = 1;
   public viewer:any;
   public autorizacion:any;
-  //public ACCESS_TOKEN: string;
+  public authToken:any=null;
 
 
   constructor(private http : HttpClient) { }
 
   async ngOnInit() {
 
-    const ACCESS_TOKEN = this.getToken();
-
-
-    console.log(ACCESS_TOKEN);
-
-    
-    
-    this.viewerOptions3d = {
+    this.viewerOptions2d = {
       initializerOptions: {
         env: "AutodeskProduction",
-        getAccessToken: (
-          onGetAccessToken: (token: string, expire: number) => void
-        ) => {
-          const expireTimeSeconds = 60 * 30;
-          onGetAccessToken(ACCESS_TOKEN, expireTimeSeconds);
+        getAccessToken: (onGetAccessToken: (token: string, expire: number) => void ) => {
+
+          if( this.authToken==null){
+            console.info("entro1");
+            fetch('http://3.211.50.52:3000/api/forge/oauth/token')
+            .then((response) => response.json())
+            .then((json) => {
+              console.log(json);
+                  this.authToken = json;
+   
+                  onGetAccessToken(json.access_token, json.expires_in);
+              });
+          }else{
+            onGetAccessToken(this.authToken.access_token, this.authToken.expires_in);
+          }
+     
         },
+
         api: "derivativeV2",
         enableMemoryManagement: true
       },
@@ -70,13 +76,58 @@ export class AppComponent {
         // Extension.registerExtension(MyExtension.extensionName, MyExtension);
       },
       onViewerInitialized: (args: ViewerInitializedEvent) => {
-        args.viewerComponent.DocumentId = DOCUMENT_URN;
+        args.viewerComponent.DocumentId = DOCUMENT_URN_2D;
       },
-      // showFirstViewable: false,
-      // headlessViewer: true,
-      // Set specific version number
-      //version: "7.41"
+
     };
+
+    setTimeout(() => {
+      this.viewerOptions3d = {
+        initializerOptions: {
+          env: "AutodeskProduction",
+          getAccessToken: (onGetAccessToken: (token: string, expire: number) => void) => {
+            // const expireTimeSeconds = 60 * 30;
+            // onGetAccessToken(ACCESS_TOKEN, expireTimeSeconds);
+           
+            if( this.authToken==null){
+              console.info("entro2");
+              fetch('http://3.211.50.52:3000/api/forge/oauth/token')
+              .then((response) => response.json())
+              .then((json) => {
+                console.log(json);
+                    this.authToken = json;
+                    // console.log(json.access_token);
+                    // console.log(json.expires_in);
+                    onGetAccessToken(json.access_token, json.expires_in);
+                });
+            }else{
+              console.info("entro2-1");
+
+              onGetAccessToken(this.authToken.access_token, this.authToken.expires_in);
+            }
+        
+          },
+          api: "derivativeV2",
+          enableMemoryManagement: true
+        },
+        viewerConfig: {
+          //extensions: ["Autodesk.DocumentBrowser", MyExtension.extensionName],
+          theme: "bim-theme"
+        },
+        onViewerScriptsLoaded: () => {
+          // Register a custom extension
+          // Extension.registerExtension(MyExtension.extensionName, MyExtension);
+        },
+        onViewerInitialized: (args: ViewerInitializedEvent) => {
+          args.viewerComponent.DocumentId = DOCUMENT_URN_3D;
+        },
+        // showFirstViewable: false,
+        // headlessViewer: true,
+        // Set specific version number
+        //version: "7.41"
+      };
+    }, 2000);
+   
 
   
 }
@@ -104,20 +155,6 @@ export class AppComponent {
       console.log(event);
    } 
 
-  public getToken():any {
-
-    this.http.get("http://localhost:3000/api/forge/oauth/token").subscribe((data)=>{
-        this.autorizacion = data;
-
-       // console.log(this.autorizacion.access_token);
-
-        return this.autorizacion.access_token;
-
-        
-    });
-
-
-   }
+ 
 
 }
-
