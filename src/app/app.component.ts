@@ -15,7 +15,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 //import { MyExtension } from './my_extension';
 
-export const DOCUMENT_URN_3D = "dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6Y2FyZG9uaXYvMjEtMDktMTQtODUzNGh1YjIubndk"; 
+export const DOCUMENT_URN_3D = "dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6Y2FyZG9uaXYvQWNjZWxlcmF0ZV9Qb0NfRGlnVHdpbl8yMDIyMDMwMS5ud2Q="; 
 export const DOCUMENT_URN_2D = "dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6Y2FyZG9uaXYvSU5UMTQzLTEwLTIwMC1ERERELTIyLVI2LmR3Zw=="; 
 
 
@@ -154,6 +154,11 @@ export class AppComponent {
     public selectionChanged(event: SelectionChangedEventArgs) {
       console.log(event);
    } 
+
+
+  /*  public selectionChanged(event: SelectionChangedEventArgs) {
+    console.log(event.dbIdArray);
+  } */
 
  
 
